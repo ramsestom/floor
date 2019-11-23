@@ -11,9 +11,16 @@ environment:
 
 dependencies:
   path: ^1.6.2
-  sqflite: ^1.1.6+4
+  sqflite:
+    git:
+      url: https://www.github.com/davidmartos96/sqflite_sqlcipher.git
+      path: sqflite
+      ref: 981b8d97751d29efcce40d6748bae098777bf794
   floor_annotation:
-    path: ../floor_annotation/
+    git:
+      url: https://github.com/zzd258147/floor.git
+      path: floor_annotation
+      ref: sqlcipher
   meta: ^1.1.6
   flutter:
     sdk: flutter
