@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
@@ -54,16 +56,40 @@ class EntityProcessor extends Processor<Entity> {
 
   @nonNull
   List<Field> _getFields() {
-    return _classElement.fields
-        .where(_isNotHashCode)
+    return _getClassFields()
+        .where(_isNotObjectField)
         .map((fieldElement) => FieldProcessor(fieldElement).process())
         .where((field) => !field.isIgnored)
         .toList();
   }
 
   @nonNull
-  bool _isNotHashCode(final FieldElement fieldElement) {
-    return fieldElement.displayName != 'hashCode';
+  List<FieldElement> _getClassFields() {
+    final Map<String, FieldElement> fields = LinkedHashMap();
+    for (FieldElement fieldElement in _classElement.fields){
+      fields[fieldElement.displayName]=fieldElement;
+    }
+    _addSuperFields(_classElement, _classElement.library, fields);
+    return List.from(fields.values);
+  }
+
+  void _addSuperFields(ClassElement classElement, LibraryElement targetLib, Map<String, FieldElement> fields){
+    for (InterfaceType interface in classElement.allSupertypes){
+        final ClassElement sclassElement = interface.element;
+        if (sclassElement != null){
+          for (FieldElement fieldElement in sclassElement.fields){
+            if (fieldElement.isAccessibleIn(targetLib)){
+              fields[fieldElement.displayName]??=fieldElement;
+            }
+          }
+          _addSuperFields(sclassElement, targetLib, fields);
+        }
+    }
+  }
+
+  @nonNull
+  bool _isNotObjectField(final FieldElement fieldElement) {
+    return fieldElement.displayName != 'hashCode' && fieldElement.displayName !='runtimeType';
   }
 
   @nonNull
