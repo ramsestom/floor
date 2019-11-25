@@ -22,7 +22,7 @@ bool isInt(final DartType type) {
 
 @nonNull
 bool isDouble(final DartType type) {
-  return type.isDartCoreDouble;
+  return type.isDartCoreDouble || type.displayName=='num';
 }
 
 @nonNull

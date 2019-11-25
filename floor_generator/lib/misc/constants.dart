@@ -9,11 +9,16 @@ abstract class AnnotationField {
   static const COLUMN_INFO_NAME = 'name';
   static const COLUMN_INFO_NULLABLE = 'nullable';
   static const COLUMN_INFO_IGNORE = 'ignore';
+  static const COLUMN_INFO_SQLTYPE = 'sqlType';
+  static const COLUMN_INFO_TOSQL = 'toSql';
+  static const COLUMN_INFO_FROMSQL = 'fromSql';
 
   static const ENTITY_TABLE_NAME = 'tableName';
   static const ENTITY_FOREIGN_KEYS = 'foreignKeys';
   static const ENTITY_INDICES = 'indices';
   static const ENTITY_PRIMARY_KEYS = 'primaryKeys';
+  static const ENTITY_TOSQL = 'toSql';
+  static const ENTITY_FROMSQL = 'fromSql';
 }
 
 abstract class ForeignKeyField {
@@ -32,8 +37,9 @@ abstract class IndexField {
 
 abstract class SqlType {
   static const INTEGER = 'INTEGER';
-  static const TEXT = 'TEXT';
   static const REAL = 'REAL';
+  static const TEXT = 'TEXT';
+  static const BLOB = 'BLOB';
 }
 
 abstract class OnConflictStrategy {

@@ -15,12 +15,18 @@ class Entity {
   /// List of primary key column names.
   final List<String> primaryKeys;
 
+  final Function toSql;
+
+  final Function fromSql;
+
   /// Marks a class as a database entity (table).
   const Entity({
     this.tableName,
     this.indices = const [],
     this.foreignKeys = const [],
     this.primaryKeys = const [],
+    this.toSql, 
+    this.fromSql
   });
 }
 

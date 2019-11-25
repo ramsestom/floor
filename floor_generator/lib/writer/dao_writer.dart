@@ -1,7 +1,11 @@
+import 'dart:collection';
+
 import 'package:code_builder/code_builder.dart';
 import 'package:floor_generator/misc/string_utils.dart';
 import 'package:floor_generator/value_object/dao.dart';
 import 'package:floor_generator/value_object/deletion_method.dart';
+import 'package:floor_generator/value_object/entity.dart';
+import 'package:floor_generator/value_object/field.dart' as fa; 
 import 'package:floor_generator/value_object/insertion_method.dart';
 import 'package:floor_generator/value_object/query_method.dart';
 import 'package:floor_generator/value_object/transaction_method.dart';
@@ -44,6 +48,8 @@ class DaoWriter extends Writer {
 
     final streamEntities = dao.streamEntities;
 
+    final Set<Entity> daoEntities = Set<Entity>();
+
     final queryMethods = dao.queryMethods;
     if (queryMethods.isNotEmpty) {
       classBuilder
@@ -58,22 +64,10 @@ class DaoWriter extends Writer {
         ..initializers.add(Code(
             "_queryAdapter = QueryAdapter(database${requiresChangeListener ? ', changeListener' : ''})"));
 
-      final queryMapperFields = queryMethods
+      daoEntities.addAll( queryMethods
           .map((method) => method.entity)
           .where((entity) => entity != null)
-          .toSet()
-          .map((entity) {
-        final constructor = entity.constructor;
-        final name = '_${decapitalize(entity.name)}Mapper';
-
-        return Field((builder) => builder
-          ..name = name
-          ..modifier = FieldModifier.final$
-          ..static = true
-          ..assignment = Code('(Map<String, dynamic> row) => $constructor'));
-      });
-
-      classBuilder.fields.addAll(queryMapperFields);
+          .toSet());
     }
 
     final insertionMethods = dao.insertionMethods;
@@ -92,15 +86,14 @@ class DaoWriter extends Writer {
 
         classBuilder..fields.add(field);
 
-        final valueMapper =
-            '(${entity.classElement.displayName} item) => ${entity.getValueMapping()}';
+        //final valueMapper = '(${entity.classElement.displayName} item) => ${entity.getValueMapping()}';
+        daoEntities.add(entity);
 
         final requiresChangeListener =
             streamEntities.any((streamEntity) => streamEntity == entity);
 
         constructorBuilder
-          ..initializers.add(Code(
-              "$fieldName = InsertionAdapter(database, '${entity.name}', $valueMapper${requiresChangeListener ? ', changeListener' : ''})"));
+          ..initializers.add(Code("$fieldName = InsertionAdapter(database, '${entity.name}', _${decapitalize(entity.name)}2map${requiresChangeListener ? ', changeListener' : ''})"));
       }
     }
 
@@ -120,15 +113,14 @@ class DaoWriter extends Writer {
 
         classBuilder..fields.add(field);
 
-        final valueMapper =
-            '(${entity.classElement.displayName} item) => ${entity.getValueMapping()}';
+        //final valueMapper = '(${entity.classElement.displayName} item) => ${entity.getValueMapping()}';
+        daoEntities.add(entity);
 
         final requiresChangeListener =
             streamEntities.any((streamEntity) => streamEntity == entity);
 
         constructorBuilder
-          ..initializers.add(Code(
-              "$fieldName = UpdateAdapter(database, '${entity.name}', ${entity.primaryKey.fields.map((field) => '\'${field.columnName}\'').toList()}, $valueMapper${requiresChangeListener ? ', changeListener' : ''})"));
+          ..initializers.add(Code("$fieldName = UpdateAdapter(database, '${entity.name}', ${entity.primaryKey.fields.map((field) => '\'${field.columnName}\'').toList()}, _${decapitalize(entity.name)}2map${requiresChangeListener ? ', changeListener' : ''})"));
       }
     }
 
@@ -148,17 +140,57 @@ class DaoWriter extends Writer {
 
         classBuilder..fields.add(field);
 
-        final valueMapper =
-            '(${entity.classElement.displayName} item) => ${entity.getValueMapping()}';
+        //final valueMapper = '(${entity.classElement.displayName} item) => ${entity.getValueMapping()}';
+        daoEntities.add(entity);
 
         final requiresChangeListener =
             streamEntities.any((streamEntity) => streamEntity == entity);
 
         constructorBuilder
-          ..initializers.add(Code(
-              "$fieldName = DeletionAdapter(database, '${entity.name}', ${entity.primaryKey.fields.map((field) => '\'${field.columnName}\'').toList()}, $valueMapper${requiresChangeListener ? ', changeListener' : ''})"));
+          ..initializers.add(Code("$fieldName = DeletionAdapter(database, '${entity.name}', ${entity.primaryKey.fields.map((field) => '\'${field.columnName}\'').toList()}, _${decapitalize(entity.name)}2map${requiresChangeListener ? ', changeListener' : ''})"));
       }
     }
+
+    Set<Reference> extrefs = HashSet();
+    for (Entity entity in daoEntities) 
+    {
+      String mapper = (entity.fromSql==null)?entity.getFromSqlDefault():(((entity.fromSql.enclosingElement?.displayName!=null)?(entity.fromSql.enclosingElement.displayName+'.'):'')+entity.fromSql.displayName); 
+
+      final fromSqlField = Field((builder) => builder
+        ..name = '_map2${decapitalize(entity.name)}'
+        ..modifier = FieldModifier.final$
+        ..static = true
+        ..type = refer('Function')
+        ..assignment = Code('$mapper'));
+
+      classBuilder.fields.add(fromSqlField);
+
+      mapper = (entity.toSql==null)?entity.getToSqlDefault():(((entity.toSql.enclosingElement?.displayName!=null)?(entity.toSql.enclosingElement.displayName+'.'):'')+entity.toSql.displayName);  
+
+      final toSqlField = Field((builder) => builder
+        ..name = '_${decapitalize(entity.name)}2map'
+        ..modifier = FieldModifier.final$
+        ..static = true
+        ..type = refer('Function')
+        ..assignment = Code('$mapper'));
+
+      classBuilder.fields.add(toSqlField);
+
+      // //TODO: add types to import for functions
+      // for (fa.Field field in entity.fields){
+      //   if (field.toSql?.enclosingElement!=null){
+      //     print("Found Import requested : "+field.toSql.enclosingElement.displayName+"\tlocencoding: "+field.toSql.enclosingElement.location.encoding+"\tlib: "+field.toSql.enclosingElement.library.toString());
+      //     extrefs.add(Reference(field.toSql.enclosingElement.displayName, field.toSql.enclosingElement.location.encoding));
+      //   }
+      //   if (field.fromSql?.enclosingElement!=null){
+      //     print("Found Import requested : "+field.fromSql.enclosingElement.displayName+"\tlocencoding: "+field.fromSql.enclosingElement.location.encoding+"\tlib: "+field.fromSql.enclosingElement.library.toString());
+      //     extrefs.add(Reference(field.fromSql.enclosingElement.displayName, field.fromSql.enclosingElement.location.encoding));
+      //   }
+      // }
+      
+    }
+    classBuilder.types.addAll(extrefs);
+    
 
     classBuilder
       ..constructors.add(constructorBuilder.build())

@@ -21,19 +21,24 @@ class FieldProcessor extends Processor<Field> {
   @override
   Field process() {
     final name = _fieldElement.name;
-    final hasColumnInfoAnnotation =
-        _columnInfoTypeChecker.hasAnnotationOfExact(_fieldElement);
+    final hasColumnInfoAnnotation = _columnInfoTypeChecker.hasAnnotationOfExact(_fieldElement);
     final columnName = _getColumnName(hasColumnInfoAnnotation, name);
     final isNullable = _getIsNullable(hasColumnInfoAnnotation);
     final isIgnored = _getIsIgnored(hasColumnInfoAnnotation);
-
+    final sqlType = _getSqlType(hasColumnInfoAnnotation);
+    final fromSql = _getFromSqlMapper(hasColumnInfoAnnotation);
+    final toSql = _getToSqlMapper(hasColumnInfoAnnotation);
+    
     return Field(
       _fieldElement,
       name,
       columnName,
       isNullable,
       isIgnored,
-      _getSqlType(),
+      sqlType,
+      _fieldElement.type,
+      fromSql,
+      toSql
     );
   }
 
@@ -70,21 +75,75 @@ class FieldProcessor extends Processor<Field> {
         : false;
   }
 
+
   @nonNull
-  String _getSqlType() {
+  String _getSqlType(bool hasColumnInfoAnnotation) {
+    return hasColumnInfoAnnotation
+        ? _columnInfoTypeChecker
+            .firstAnnotationOfExact(_fieldElement)
+            .getField(AnnotationField.COLUMN_INFO_SQLTYPE)
+            ?.toStringValue() ??
+            _getSqlTypeAuto()
+        : _getSqlTypeAuto();
+  }
+
+  @nonNull
+  String _getSqlTypeAuto() {
     final type = _fieldElement.type;
-    if (isInt(type)) {
-      return SqlType.INTEGER;
-    } else if (isString(type)) {
-      return SqlType.TEXT;
-    } else if (isBool(type)) {
+    if (isInt(type) || isBool(type)) {
       return SqlType.INTEGER;
     } else if (isDouble(type)) {
       return SqlType.REAL;
-    }
-    throw InvalidGenerationSourceError(
-      'Column type is not supported for $type.',
-      element: _fieldElement,
-    );
+    } else if (isString(type)) {
+      return SqlType.TEXT;
+    } 
+    return SqlType.BLOB;
+    //throw InvalidGenerationSourceError(
+    //  'Column type is not supported for $type.',
+    //  element: _fieldElement,
+    //);
   }
+
+
+  @nonNull
+  ExecutableElement _getToSqlMapper(bool hasColumnInfoAnnotation) {
+    return hasColumnInfoAnnotation
+        ? _columnInfoTypeChecker
+            .firstAnnotationOfExact(_fieldElement)
+            .getField(AnnotationField.COLUMN_INFO_TOSQL)
+            ?.toFunctionValue() 
+        : null;
+  }
+
+  @nonNull
+  ExecutableElement _getFromSqlMapper(bool hasColumnInfoAnnotation) {
+    return hasColumnInfoAnnotation
+        ? _columnInfoTypeChecker
+            .firstAnnotationOfExact(_fieldElement)
+            .getField(AnnotationField.COLUMN_INFO_FROMSQL)
+            ?.toFunctionValue() 
+        : null;
+  }
+
+
+  // @nonNull
+  // String _getToSqlMapper(bool hasColumnInfoAnnotation) {
+  //   if (!hasColumnInfoAnnotation){return null;}
+  //   final ExecutableElement fe = _columnInfoTypeChecker.firstAnnotationOfExact(_fieldElement).getField(AnnotationField.COLUMN_INFO_TOSQL)?.toFunctionValue();
+  //   if (fe!=null){
+  //     return ((fe.enclosingElement!=null)?fe.enclosingElement.displayName+'.':'')+fe.displayName;
+  //   }
+  //   return null;
+  // }
+
+  // @nonNull
+  // String _getFromSqlMapper(bool hasColumnInfoAnnotation) {
+  //   if (!hasColumnInfoAnnotation){return null;}
+  //   final ExecutableElement fe = _columnInfoTypeChecker.firstAnnotationOfExact(_fieldElement).getField(AnnotationField.COLUMN_INFO_FROMSQL)?.toFunctionValue();
+  //   if (fe!=null){
+  //     return ((fe.enclosingElement!=null)?fe.enclosingElement.displayName+'.':'')+fe.displayName;
+  //   }
+  //   return null;
+  // }
+
 }

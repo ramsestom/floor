@@ -41,7 +41,8 @@ class EntityProcessor extends Processor<Entity> {
       _getPrimaryKey(fields),
       _getForeignKeys(),
       _getIndices(fields, name),
-      _getConstructor(fields),
+      _getFromSql(), 
+      _getToSql()    
     );
   }
 
@@ -256,43 +257,89 @@ class EntityProcessor extends Processor<Entity> {
   }
 
   @nonNull
-  String _getConstructor(final List<Field> fields) {
-    final columnNames = fields.map((field) => field.columnName).toList();
-    final constructorParameters = _classElement.constructors.first.parameters;
-
-    final parameterValues = <String>[];
-
-    for (var i = 0; i < constructorParameters.length; i++) {
-      final parameterValue = "row['${columnNames[i]}']";
-      final constructorParameter = constructorParameters[i];
-      final castedParameterValue =
-          _castParameterValue(constructorParameter.type, parameterValue);
-
-      if (castedParameterValue == null) {
-        throw _processorError.parameterTypeNotSupported(constructorParameter);
-      }
-
-      parameterValues.add(castedParameterValue);
-    }
-
-    return '${_classElement.displayName}(${parameterValues.join(', ')})';
+  ExecutableElement _getFromSql() {
+    return _entityTypeChecker
+            .firstAnnotationOfExact(_classElement)
+            .getField(AnnotationField.ENTITY_FROMSQL)
+            ?.toFunctionValue();
   }
 
-  @nullable
-  String _castParameterValue(
-    final DartType parameterType,
-    final String parameterValue,
-  ) {
-    if (isBool(parameterType)) {
-      return '($parameterValue as int) != 0'; // maps int to bool
-    } else if (isString(parameterType)) {
-      return '$parameterValue as String';
-    } else if (isInt(parameterType)) {
-      return '$parameterValue as int';
-    } else if (isDouble(parameterType)) {
-      return '$parameterValue as double';
-    } else {
-      return null;
-    }
+  @nonNull
+  ExecutableElement _getToSql() {
+    return _entityTypeChecker
+            .firstAnnotationOfExact(_classElement)
+            .getField(AnnotationField.ENTITY_TOSQL)
+            ?.toFunctionValue();
   }
+
+  // @nonNull
+  // String _getFromSqlAuto(final List<Field> fields) {
+  //   final columnNames = fields.map((field) => field.columnName).toList();
+  //   ConstructorElement choosedConstructor = null;
+  //   final parameterValues = <String>[];
+  //   final List<Field> unmappedFields = fields; //List<Field>();
+  //   // for (ConstructorElement constructor in _classElement.constructors) {
+
+  //   // }
+  //   // for (var i = 0; i < constructorParameters.length; i++) {
+  //   //   final parameterValue = "row['${columnNames[i]}']";
+  //   //   final constructorParameter = constructorParameters[i];
+  //   //   final castedParameterValue = _castParameterValue(constructorParameter.type, parameterValue);
+  //   //   if (castedParameterValue == null) {
+  //   //     throw _processorError.parameterTypeNotSupported(constructorParameter);
+  //   //   }
+  //   //   parameterValues.add(castedParameterValue);
+  //   // }
+
+  //   final StringBuffer sb = new StringBuffer();
+  //   sb.writeln('(Map<String, dynamic> row) {');
+  //   sb.writeln('  var e = ${choosedConstructor?.displayName ?? _classElement.displayName}(${parameterValues.join(', ')});');
+  //   for (Field field in unmappedFields){
+  //     String val = _castParameterValue(field.dartType, "row['${field.columnName}']");
+  //     String mapFunc = (field.fromSql==null)?null:(((field.fromSql.enclosingElement?.displayName!=null)?field.fromSql.enclosingElement.displayName+'.':'')+field.fromSql.displayName);
+  //     sb.writeln('e.${field.name}='+((mapFunc!=null)?'$mapFunc($val);':'$val;')); 
+  //   }
+  //   sb.writeln('  return e;');
+  //   sb.writeln('}');       
+  //   return sb.toString();
+  // }
+ 
+
+  // @nullable
+  // String _castParameterValue(final DartType parameterType, final String parameterValue) 
+  // {
+  //   if (isBool(parameterType)) {
+  //     return '($parameterValue as int) != 0'; // maps int to bool
+  //   } else if (isString(parameterType)) {
+  //     return '$parameterValue as String';
+  //   } else if (isInt(parameterType)) {
+  //     return '$parameterValue as int';
+  //   } else if (isDouble(parameterType)) {
+  //     return '$parameterValue as double';
+  //   } else {
+  //     return '$parameterValue';
+  //   }
+  // }
+
+  // @nonNull
+  // String _getToSqlAuto(final List<Field> fields) {
+    
+  //  final keyValueList = fields.map((field) {
+  //     final columnName = field.columnName;
+  //     final attributeValue = _getAttributeValue(field.fieldElement);
+  //     String mapFunc = (field.toSql==null)?null:(((field.toSql.enclosingElement?.displayName!=null)?field.toSql.enclosingElement.displayName+'.':'')+field.toSql.displayName); //(field.toSql!=null) ? (_classElement.displayName+'.'+field.toSql) : null;
+  //     return "'$columnName': "+((mapFunc!=null)?'$mapFunc($attributeValue)':'$attributeValue');
+  //   }).toList();
+
+  //   return '(${_classElement.displayName} item) => <String, dynamic>{${keyValueList.join(', ')}}';
+  // }
+
+  // @nonNull
+  // String _getAttributeValue(final FieldElement fieldElement) {
+  //   final parameterName = fieldElement.displayName;
+  //   return isBool(fieldElement.type)
+  //       ? 'item.$parameterName ? 1 : 0'
+  //       : 'item.$parameterName';
+  // }
+
 }

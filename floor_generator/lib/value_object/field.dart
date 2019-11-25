@@ -1,4 +1,5 @@
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:floor_generator/misc/annotations.dart';
 
 /// Represents an Entity field and thus a table column.
@@ -9,7 +10,10 @@ class Field {
   final bool isNullable;
   final bool isIgnored;
   final String sqlType;
-
+  final DartType dartType;
+  final ExecutableElement fromSql;
+  final ExecutableElement toSql;
+    
   Field(
     this.fieldElement,
     this.name,
@@ -17,6 +21,9 @@ class Field {
     this.isNullable,
     this.isIgnored,
     this.sqlType,
+    this.dartType,
+    this.fromSql,
+    this.toSql
   );
 
   /// The database column definition.
