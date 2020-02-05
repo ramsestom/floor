@@ -68,7 +68,9 @@ class EntityProcessor extends Processor<Entity> {
   List<FieldElement> _getClassFields() {
     final Map<String, FieldElement> fields = LinkedHashMap();
     for (FieldElement fieldElement in _classElement.fields){
-      fields[fieldElement.displayName]=fieldElement;
+      if (_isFieldWithGetterAndSetter(fieldElement)){
+        fields[fieldElement.displayName]=fieldElement;
+      }
     }
     _addSuperFields(_classElement, _classElement.library, fields);
     return List.from(fields.values);
@@ -80,7 +82,9 @@ class EntityProcessor extends Processor<Entity> {
         if (sclassElement != null){
           for (FieldElement fieldElement in sclassElement.fields){
             if (fieldElement.isAccessibleIn(targetLib)){
-              fields[fieldElement.displayName]??=fieldElement;
+              if (_isFieldWithGetterAndSetter(fieldElement)){
+                fields[fieldElement.displayName]??=fieldElement;
+              }
             }
           }
           _addSuperFields(sclassElement, targetLib, fields);
@@ -91,6 +95,11 @@ class EntityProcessor extends Processor<Entity> {
   @nonNull
   bool _isNotObjectField(final FieldElement fieldElement) {
     return fieldElement.displayName != 'hashCode' && fieldElement.displayName !='runtimeType';
+  }
+
+  @nonNull
+  bool _isFieldWithGetterAndSetter(final FieldElement fieldElement) {
+    return fieldElement.getter!=null && fieldElement.setter!=null ;
   }
 
   @nonNull

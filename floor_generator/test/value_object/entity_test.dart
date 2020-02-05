@@ -176,7 +176,7 @@ void main() {
       final actual = entity.getValueMapping();
 
       final expected = '<String, dynamic>{'
-          "'${nullableField.columnName}': item.$fieldElementDisplayName ? 1 : 0"
+          "'${nullableField.columnName}': item.$fieldElementDisplayName!=null ? (item.$fieldElementDisplayName ? 1 : 0) : null"
           '}';
       expect(actual, equals(expected));
     });
