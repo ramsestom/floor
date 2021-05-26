@@ -83,16 +83,44 @@ abstract class QueryableProcessor<T extends Queryable> extends Processor<T> {
           parameterElement,
         );
       } else {
-        final typeConverter = [...queryableTypeConverters, field.typeConverter]
-            .whereNotNull()
-            .getClosest(parameterElement.type);
+        // final typeConverter = [...queryableTypeConverters, field.typeConverter]
+        //     .whereNotNull()
+        //     .getClosest(parameterElement.type);
+        // final castedDatabaseValue = databaseValue.cast(
+        //   typeConverter.databaseType,
+        //   parameterElement,
+        // );
+
+        // parameterValue =
+        //     '_${typeConverter.name.decapitalize()}.decode($castedDatabaseValue)';
+
+
+        final bool nullableAttribute = parameterElement.type != parameterElement.type.promoteNonNullable();
+        final Iterable<TypeConverter> typeConverters = [
+          ...queryableTypeConverters,
+          field.typeConverter,
+        ].whereNotNull();
+        bool mustadatptonull = false;
+        TypeConverter? typeConverter = typeConverters.getClosestOrNull(parameterElement.type);
+        if (typeConverter==null && nullableAttribute){
+          typeConverter = typeConverters.getClosestOrNull(parameterElement.type.promoteNonNullable());
+          mustadatptonull = true;
+        }
+        if (typeConverter==null){
+          throw InvalidGenerationSourceError(
+            'Column type is not supported for ${parameterElement.type}',
+            todo: 'Either use a supported type or supply a type converter.',
+          );
+        }
+
         final castedDatabaseValue = databaseValue.cast(
           typeConverter.databaseType,
           parameterElement,
         );
 
-        parameterValue =
-            '_${typeConverter.name.decapitalize()}.decode($castedDatabaseValue)';
+        parameterValue = (mustadatptonull?'($castedDatabaseValue==null)?null:':'')+
+             '_${typeConverter.name.decapitalize()}.decode($castedDatabaseValue)';
+      
       }
 
       if (parameterElement.isNamed) {

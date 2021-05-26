@@ -9,8 +9,10 @@ import 'package:floor_generator/misc/type_utils.dart';
 import 'package:floor_generator/value_object/query.dart';
 import 'package:floor_generator/value_object/query_method.dart';
 import 'package:floor_generator/value_object/queryable.dart';
+import 'package:floor_generator/value_object/type_converter.dart';
 import 'package:floor_generator/value_object/view.dart';
 import 'package:floor_generator/writer/writer.dart';
+import 'package:source_gen/source_gen.dart';
 
 class QueryMethodWriter implements Writer {
   final QueryMethod _queryMethod;
@@ -119,9 +121,27 @@ class QueryMethodWriter implements Writer {
             return parameter.displayName;
           }
         } else {
-          final typeConverter =
-              _queryMethod.typeConverters.getClosest(parameter.type);
-          return '_${typeConverter.name.decapitalize()}.encode(${parameter.displayName})';
+          // final typeConverter =
+          //     _queryMethod.typeConverters.getClosest(parameter.type);
+          // return '_${typeConverter.name.decapitalize()}.encode(${parameter.displayName})';
+     
+          final bool nullableAttribute = parameter.type != parameter.type.promoteNonNullable();
+          bool mustadatptonull = false;
+          TypeConverter? typeConverter = _queryMethod.typeConverters.getClosestOrNull(parameter.type);
+          if (typeConverter==null && nullableAttribute){
+            typeConverter = _queryMethod.typeConverters.getClosestOrNull(parameter.type.promoteNonNullable());
+            mustadatptonull = true;
+          }
+          if (typeConverter==null){
+            throw InvalidGenerationSourceError(
+              'Column type is not supported for ${parameter.type}',
+              todo: 'Either use a supported type or supply a type converter.',
+            );
+          }
+
+          return (mustadatptonull?'(${parameter.displayName}==null)?null:':'')+
+            '_${typeConverter.name.decapitalize()}.encode(${parameter.displayName})';
+
         }
       }),
       ..._queryMethod.parameters
@@ -132,9 +152,26 @@ class QueryMethodWriter implements Writer {
         if (flatType.isDefaultSqlType) {
           return '...${parameter.displayName}';
         } else {
-          final typeConverter =
-              _queryMethod.typeConverters.getClosest(flatType);
-          return '...${parameter.displayName}.map((element) => _${typeConverter.name.decapitalize()}.encode(element))';
+          // final typeConverter =
+          //     _queryMethod.typeConverters.getClosest(flatType);
+          // return '...${parameter.displayName}.map((element) => _${typeConverter.name.decapitalize()}.encode(element))';
+
+          final bool nullableAttribute = flatType != flatType.promoteNonNullable();
+          bool mustadatptonull = false;
+          TypeConverter? typeConverter = _queryMethod.typeConverters.getClosestOrNull(flatType);
+          if (typeConverter==null && nullableAttribute){
+            typeConverter = _queryMethod.typeConverters.getClosestOrNull(flatType.promoteNonNullable());
+            mustadatptonull = true;
+          }
+          if (typeConverter==null){
+            throw InvalidGenerationSourceError(
+              'Column type is not supported for $flatType',
+              todo: 'Either use a supported type or supply a type converter.',
+            );
+          }
+
+          return '...${parameter.displayName}.map((element) => '+(mustadatptonull?'(element==null)?null:':'')+'_${typeConverter.name.decapitalize()}.encode(element))';
+
         }
       })
     ];

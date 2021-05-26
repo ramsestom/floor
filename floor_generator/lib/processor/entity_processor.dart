@@ -17,6 +17,7 @@ import 'package:floor_generator/value_object/fts.dart';
 import 'package:floor_generator/value_object/index.dart';
 import 'package:floor_generator/value_object/primary_key.dart';
 import 'package:floor_generator/value_object/type_converter.dart';
+import 'package:source_gen/source_gen.dart';
 
 class EntityProcessor extends QueryableProcessor<Entity> {
   final EntityProcessorError _processorError;
@@ -282,12 +283,30 @@ class EntityProcessor extends QueryableProcessor<Entity> {
     if (fieldType.isDefaultSqlType) {
       attributeValue = 'item.$parameterName';
     } else {
-      final typeConverter = [
+      // final typeConverter = [
+      //   ...queryableTypeConverters,
+      //   field.typeConverter,
+      // ].whereNotNull().getClosest(fieldType);
+      final bool nullableAttribute = fieldType != fieldType.promoteNonNullable();
+      final Iterable<TypeConverter> typeConverters = [
         ...queryableTypeConverters,
         field.typeConverter,
-      ].whereNotNull().getClosest(fieldType);
-      attributeValue =
-          '_${typeConverter.name.decapitalize()}.encode(item.$parameterName)';
+      ].whereNotNull();
+      bool mustadatptonull = false;
+      TypeConverter? typeConverter = typeConverters.getClosestOrNull(fieldType);
+      if (typeConverter==null && nullableAttribute){
+        typeConverter = typeConverters.getClosestOrNull(fieldType.promoteNonNullable());
+        mustadatptonull = true;
+      }
+      if (typeConverter==null){
+        throw InvalidGenerationSourceError(
+          'Column type is not supported for $fieldType',
+          todo: 'Either use a supported type or supply a type converter.',
+        );
+      }
+
+      attributeValue = (mustadatptonull?'(item.$parameterName==null)?null:':'')+
+        '_${typeConverter.name.decapitalize()}.encode(item.$parameterName)';
     }
 
     if (fieldType.isDartCoreBool) {

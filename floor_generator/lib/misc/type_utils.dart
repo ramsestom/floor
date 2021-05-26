@@ -38,6 +38,11 @@ extension FlattenUtil on DartType {
   }
 }
 
+extension DartTypeExtension on DartType {
+  DartType promoteNonNullable() => 
+      element?.library?.typeSystem.promoteToNonNull(this) ?? this;
+}
+
 extension AnnotationChecker on Element {
   bool hasAnnotation(final Type type) {
     return _typeChecker(type).hasAnnotationOfExact(this);
