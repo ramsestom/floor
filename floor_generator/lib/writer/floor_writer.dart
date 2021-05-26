@@ -14,7 +14,7 @@ class FloorWriter extends Writer {
       ..name = 'databaseBuilder'
       ..lambda = true
       ..static = true
-      ..body = Code('$databaseBuilderName(name)')
+      ..body = Code('$databaseBuilderName(name, password)')
       ..returns = refer(databaseBuilderName)
       ..docs.addAll([
         r'/// Creates a database builder for a persistent database.',
@@ -22,7 +22,13 @@ class FloorWriter extends Writer {
       ])
       ..requiredParameters.add(Parameter((builder) => builder
         ..name = 'name'
-        ..type = refer('String'))));
+        ..type = refer('String')))
+      ..optionalParameters.add(Parameter((builder) => builder
+        ..name = 'password'
+        ..type = refer('String?')))
+    );
+      
+      
 
     final inMemoryDatabaseBuilderMethod = Method((builder) => builder
       ..name = 'inMemoryDatabaseBuilder'
