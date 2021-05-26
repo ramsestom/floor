@@ -119,7 +119,7 @@ abstract class QueryableProcessor<T extends Queryable> extends Processor<T> {
         );
 
         parameterValue = (mustadatptonull?'($castedDatabaseValue==null)?null:':'')+
-             '_${typeConverter.name.decapitalize()}.decode($castedDatabaseValue)';
+             '_${typeConverter.name.decapitalize()}.decode($castedDatabaseValue'+(mustadatptonull?'!':'')+')';
       
       }
 

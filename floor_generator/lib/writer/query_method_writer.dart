@@ -140,7 +140,7 @@ class QueryMethodWriter implements Writer {
           }
 
           return (mustadatptonull?'(${parameter.displayName}==null)?null:':'')+
-            '_${typeConverter.name.decapitalize()}.encode(${parameter.displayName})';
+            '_${typeConverter.name.decapitalize()}.encode(${parameter.displayName}'+(mustadatptonull?'!':'')+')';
 
         }
       }),
@@ -170,7 +170,7 @@ class QueryMethodWriter implements Writer {
             );
           }
 
-          return '...${parameter.displayName}.map((element) => '+(mustadatptonull?'(element==null)?null:':'')+'_${typeConverter.name.decapitalize()}.encode(element))';
+          return '...${parameter.displayName}.map((element) => '+(mustadatptonull?'(element==null)?null:':'')+'_${typeConverter.name.decapitalize()}.encode(element'+(mustadatptonull?'!':'')+'))';
 
         }
       })

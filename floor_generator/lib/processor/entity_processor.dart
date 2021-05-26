@@ -306,7 +306,7 @@ class EntityProcessor extends QueryableProcessor<Entity> {
       }
 
       attributeValue = (mustadatptonull?'(item.$parameterName==null)?null:':'')+
-        '_${typeConverter.name.decapitalize()}.encode(item.$parameterName)';
+        '_${typeConverter.name.decapitalize()}.encode(item.$parameterName'+(mustadatptonull?'!':'')+')';
     }
 
     if (fieldType.isDartCoreBool) {
