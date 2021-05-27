@@ -1,8 +1,10 @@
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/type.dart';
 import 'package:floor_generator/misc/type_utils.dart';
 import 'package:floor_generator/processor/error/processor_error.dart';
 import 'package:floor_generator/processor/processor.dart';
 import 'package:floor_generator/value_object/type_converter.dart';
+import 'package:collection/collection.dart';
 
 class TypeConverterProcessor extends Processor<TypeConverter> {
   final ClassElement _classElement;
@@ -16,14 +18,18 @@ class TypeConverterProcessor extends Processor<TypeConverter> {
 
   @override
   TypeConverter process() {
-    final supertype = _classElement.supertype;
+    InterfaceType? supertype = _classElement.supertype?.element.displayName == 'TypeConverter'?_classElement.supertype:null;
     if (supertype == null) {
-      throw ProcessorError(
-        message:
-            'Only classes that inherit from TypeConverter can be used as type converters.',
-        todo: 'Make sure use a class that inherits from TypeConverter.',
-        element: _classElement,
-      );
+      //May be that he implements the TypeConverter interface rather than extending it
+      supertype= _classElement.interfaces.firstWhereOrNull((interface) => interface.element.displayName == 'TypeConverter');
+      if (supertype==null){
+        throw ProcessorError(
+          message:
+              'Only classes that inherit from or implements TypeConverter can be used as type converters.',
+          todo: 'Make sure use a class that inherits from or implements TypeConverter.',
+          element: _classElement,
+        );
+      }
     }
     final typeArguments = supertype.typeArguments;
     final fieldType = typeArguments[0];
@@ -47,3 +53,4 @@ class TypeConverterProcessor extends Processor<TypeConverter> {
     );
   }
 }
+

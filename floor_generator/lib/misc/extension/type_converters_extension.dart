@@ -1,4 +1,3 @@
-import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:collection/collection.dart';
 import 'package:floor_generator/misc/extension/iterable_extension.dart';

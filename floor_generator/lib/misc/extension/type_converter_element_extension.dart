@@ -33,8 +33,8 @@ extension TypeConverterElementExtension on Element {
           .any((element) => !element.isTypeConverter)) {
         throw ProcessorError(
           message:
-              'Only classes that inherit from TypeConverter can be used as type converters.',
-          todo: 'Make sure use a class that inherits from TypeConverter.',
+              'Only classes that implements or inherit from TypeConverter can be used as type converters.',
+          todo: 'Make sure use a class that implements or inherits from TypeConverter. ',
           element: this,
         );
       }
@@ -49,5 +49,5 @@ extension TypeConverterElementExtension on Element {
 }
 
 extension on ClassElement {
-  bool get isTypeConverter => supertype?.element.displayName == 'TypeConverter';
+  bool get isTypeConverter => (supertype?.element.displayName == 'TypeConverter') || (interfaces.any((interface) => interface.element.displayName == 'TypeConverter')); 
 }
