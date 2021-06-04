@@ -194,9 +194,9 @@ void main() {
 
       final expectedFieldNames = ['id', 'name'];
       const expectedConstructor =
-          "TestEntity(row['id'] as int, row['name'] as String)";
+          "(Map<String, Object?> row) => TestEntity(row['id'] as int, row['name'] as String)";
       expect(fieldNames, containsAll(expectedFieldNames));
-      expect(actual.constructor, equals(expectedConstructor));
+      expect(actual.mapper, equals(expectedConstructor));
     });
 
     test('Inherits fields from abstract parent class', () async {
@@ -226,9 +226,9 @@ void main() {
 
       final expectedFieldNames = ['id', 'foo', 'name'];
       const expectedConstructor =
-          "TestEntity(row['id'] as int, row['foo'] as double, row['name'] as String)";
+          "(Map<String, Object?> row) => TestEntity(row['id'] as int, row['foo'] as double, row['name'] as String)";
       expect(fieldNames, containsAll(expectedFieldNames));
-      expect(actual.constructor, equals(expectedConstructor));
+      expect(actual.mapper, equals(expectedConstructor));
     });
 
     test('Inherits fields from superclass', () async {
@@ -252,9 +252,9 @@ void main() {
 
       final expectedFieldNames = ['id', 'name'];
       const expectedConstructor =
-          "TestEntity(row['id'] as int, row['name'] as String)";
+          "(Map<String, Object?> row) => TestEntity(row['id'] as int, row['name'] as String)";
       expect(fieldNames, containsAll(expectedFieldNames));
-      expect(actual.constructor, equals(expectedConstructor));
+      expect(actual.mapper, equals(expectedConstructor));
     });
 
     test('Inherits fields from superclass', () async {
@@ -280,9 +280,9 @@ void main() {
 
       final expectedFieldNames = ['id', 'name'];
       const expectedConstructor =
-          "TestEntity(row['id'] as int, row['name'] as String)";
+          "(Map<String, Object?> row) => TestEntity(row['id'] as int, row['name'] as String)";
       expect(fieldNames, containsAll(expectedFieldNames));
-      expect(actual.constructor, equals(expectedConstructor));
+      expect(actual.mapper, equals(expectedConstructor));
     });
 
     test('Throws when queryable inherits from mixin', () async {
@@ -403,9 +403,9 @@ void main() {
       }
     ''');
 
-      final actual = TestProcessor(classElement).process().constructor;
+      final actual = TestProcessor(classElement).process().mapper;
 
-      const expected = "Person(row['id'] as int, row['name'] as String)";
+      const expected = "(Map<String, Object?> row) => Person(row['id'] as int, row['name'] as String)";
       expect(actual, equals(expected));
     });
 
@@ -422,10 +422,10 @@ void main() {
       }
     ''');
 
-      final actual = TestProcessor(classElement).process().constructor;
+      final actual = TestProcessor(classElement).process().mapper;
 
       const expected =
-          "Person(row['id'] as int, row['name'] as String, bar: row['bar'] as String)";
+          "(Map<String, Object?> row) => Person(row['id'] as int, row['name'] as String, bar: row['bar'] as String)";
       expect(actual, equals(expected));
     });
 
@@ -444,10 +444,10 @@ void main() {
       }
     ''');
 
-      final actual = TestProcessor(classElement).process().constructor;
+      final actual = TestProcessor(classElement).process().mapper;
 
       const expected =
-          "Person(row['id'] as int, row['name'] as String, bar: (row['bar'] as int) != 0, foo: row['foo'] == null ? null : (row['foo'] as int) != 0)";
+          "(Map<String, Object?> row) => Person(row['id'] as int, row['name'] as String, bar: (row['bar'] as int) != 0, foo: row['foo'] == null ? null : (row['foo'] as int) != 0)";
       expect(actual, equals(expected));
     });
 
@@ -464,10 +464,10 @@ void main() {
       }
     ''');
 
-      final actual = TestProcessor(classElement).process().constructor;
+      final actual = TestProcessor(classElement).process().mapper;
 
       const expected =
-          "Person(id: row['id'] as int, name: row['name'] as String, bar: row['bar'] as String)";
+          "(Map<String, Object?> row) => Person(id: row['id'] as int, name: row['name'] as String, bar: row['bar'] as String)";
       expect(actual, equals(expected));
     });
 
@@ -484,10 +484,10 @@ void main() {
       }
     ''');
 
-      final actual = TestProcessor(classElement).process().constructor;
+      final actual = TestProcessor(classElement).process().mapper;
 
       const expected =
-          "Person(row['id'] as int, row['name'] as String, row['bar'] as String?)";
+          "(Map<String, Object?> row) => Person(row['id'] as int, row['name'] as String, row['bar'] as String?)";
       expect(actual, equals(expected));
     });
 
@@ -504,10 +504,10 @@ void main() {
       }
     ''');
 
-      final actual = TestProcessor(classElement).process().constructor;
+      final actual = TestProcessor(classElement).process().mapper;
 
       const expected =
-          "Person(row['id'] as int?, row['name'] as String?, row['bar'] as String?)";
+          "(Map<String, Object?> row) => Person(row['id'] as int?, row['name'] as String?, row['bar'] as String?)";
       expect(actual, equals(expected));
     });
 
@@ -529,10 +529,9 @@ void main() {
           }
         ''');
 
-        final actual = TestProcessor(classElement).process().constructor;
+        final actual = TestProcessor(classElement).process().mapper;
 
-        const expected =
-            "Person(row['id'] as int?, row['doubleId'] as double?, row['name'] as String?, row['bar'] == null ? null : (row['bar'] as int) != 0, row['blob'] as Uint8List?)";
+        const expected = "(Map<String, Object?> row) => Person(row['id'] as int?, row['doubleId'] as double?, row['name'] as String?, row['bar'] == null ? null : (row['bar'] as int) != 0, row['blob'] as Uint8List?)";
         expect(actual, equals(expected));
       });
 
@@ -553,10 +552,9 @@ void main() {
           }
         ''');
 
-        final actual = TestProcessor(classElement).process().constructor;
+        final actual = TestProcessor(classElement).process().mapper;
 
-        const expected =
-            "Person(row['id'] as int, row['doubleId'] as double, row['name'] as String, (row['bar'] as int) != 0, row['blob'] as Uint8List)";
+        const expected = "(Map<String, Object?> row) => Person(row['id'] as int, row['doubleId'] as double, row['name'] as String, (row['bar'] as int) != 0, row['blob'] as Uint8List)";
         expect(actual, equals(expected));
       });
     });
@@ -600,9 +598,9 @@ void main() {
       }
     ''');
 
-      final actual = TestProcessor(classElement).process().constructor;
+      final actual = TestProcessor(classElement).process().mapper;
 
-      const expected = "Person(row['id'] as int, row['name'] as String)";
+      const expected = "(Map<String, Object?> row) => Person(row['id'] as int, row['name'] as String)";
       expect(actual, equals(expected));
     });
   });
@@ -612,8 +610,8 @@ class TestQueryable extends Queryable {
   TestQueryable(
     ClassElement classElement,
     List<Field> fields,
-    String constructor,
-  ) : super(classElement, '', fields, constructor);
+    String mapper,
+  ) : super(classElement, '', fields, mapper);
 
   @override
   bool operator ==(Object other) =>
@@ -622,15 +620,15 @@ class TestQueryable extends Queryable {
           runtimeType == other.runtimeType &&
           classElement == other.classElement &&
           const ListEquality<Field>().equals(fields, other.fields) &&
-          constructor == other.constructor;
+          mapper == other.mapper;
 
   @override
   int get hashCode =>
-      classElement.hashCode ^ fields.hashCode ^ constructor.hashCode;
+      classElement.hashCode ^ fields.hashCode ^ mapper.hashCode;
 
   @override
   String toString() {
-    return 'TestQueryable{classElement: $classElement, name: $name, fields: $fields, constructor: $constructor}';
+    return 'TestQueryable{classElement: $classElement, name: $name, fields: $fields, mapper: $mapper}';
   }
 }
 
@@ -646,7 +644,7 @@ class TestProcessor extends QueryableProcessor<TestQueryable> {
     return TestQueryable(
       classElement,
       fields,
-      getConstructor(fields),
+      getMapper(fields),
     );
   }
 }

@@ -5,7 +5,7 @@ abstract class Queryable {
   final ClassElement classElement;
   final String name;
   final List<Field> fields;
-  final String constructor;
+  final String mapper;
 
-  Queryable(this.classElement, this.name, this.fields, this.constructor);
+  Queryable(this.classElement, this.name, this.fields, this.mapper);
 }

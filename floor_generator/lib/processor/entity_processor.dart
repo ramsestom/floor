@@ -47,7 +47,7 @@ class EntityProcessor extends QueryableProcessor<Entity> {
       _getForeignKeys(),
       _getIndices(fields, name),
       _getWithoutRowid(),
-      getConstructor(fields),
+      getMapper(fields),
       _getValueMapping(fields),
       _getFts(),
     );

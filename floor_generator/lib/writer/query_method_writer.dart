@@ -228,6 +228,7 @@ class QueryMethodWriter implements Writer {
 }
 
 String _generateMapper(Queryable queryable) {
-  final constructor = queryable.constructor;
-  return '(Map<String, Object?> row) => $constructor';
+  return queryable.mapper;
+  //final constructor = queryable.constructor;
+  //return '(Map<String, Object?> row) => $constructor';
 }

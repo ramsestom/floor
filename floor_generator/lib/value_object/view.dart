@@ -27,7 +27,7 @@ class View extends Queryable {
           name == other.name &&
           const ListEquality<Field>().equals(fields, other.fields) &&
           query == other.query &&
-          constructor == other.constructor;
+          mapper == other.mapper;
 
   @override
   int get hashCode =>
@@ -35,10 +35,10 @@ class View extends Queryable {
       name.hashCode ^
       fields.hashCode ^
       query.hashCode ^
-      constructor.hashCode;
+      mapper.hashCode;
 
   @override
   String toString() {
-    return 'View{classElement: $classElement, name: $name, fields: $fields, query: $query, constructor: $constructor}';
+    return 'View{classElement: $classElement, name: $name, fields: $fields, query: $query, mapper: $mapper}';
   }
 }

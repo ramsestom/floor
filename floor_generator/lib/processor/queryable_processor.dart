@@ -53,34 +53,63 @@ abstract class QueryableProcessor<T extends Queryable> extends Processor<T> {
   }
 
   @protected
-  String getConstructor(final List<Field> fields) {
-    final constructorParameters = classElement.constructors.first.parameters;
-    final parameterValues = constructorParameters
-        .map((parameterElement) => _getParameterValue(parameterElement, fields))
-        .where((parameterValue) => parameterValue != null)
-        .join(', ');
+  String getMapper(final List<Field> fields) {
+    final List<ParameterElement> constructorParameters = classElement.constructors.first.parameters;
+    final List<Field> nonconstructorFields = List.from(fields);
+    final List<String> parameterValues = [];
+    for (ParameterElement parameterElement in constructorParameters){
+      final Field? pfield = _getMatchingField(parameterElement, nonconstructorFields);
+      if (pfield!=null){
+        final String? pval = _getElementValue(pfield, parameterElement.type, parameterElement);
+        if (pval!=null){
+          parameterValues.add(((parameterElement.isNamed)?'${parameterElement.displayName}: ':'')+pval);
+        }
+        nonconstructorFields.remove(pfield);
+      }
+    }
 
-    return '${classElement.displayName}($parameterValues)';
+    String mapper = '(Map<String, Object?> row) => ${classElement.displayName}(${parameterValues.join(', ')})';
+    //if (nonconstructorFields.length<4){
+    for (Field ncpfield in nonconstructorFields){
+      if (_isFieldWithGetterAndSetter(ncpfield.fieldElement)){
+        mapper+='..${ncpfield.name}=(${_getElementValue(ncpfield, ncpfield.fieldElement.type, ncpfield.fieldElement)})';
+      }
+    }
+    //}
+
+    return mapper;
   }
 
-  /// Returns `null` whenever field is @ignored
-  String? _getParameterValue(
+
+  static bool _isFieldWithGetterAndSetter(final FieldElement fieldElement) {
+    return fieldElement.getter!=null && fieldElement.setter!=null ;
+  }
+
+  /// Returns `null` if no matching field could be found
+  Field? _getMatchingField(
     final ParameterElement parameterElement,
     final List<Field> fields,
   ) {
     final parameterName = parameterElement.displayName;
-    final field =
-        // null whenever field is @ignored
-        fields.firstWhereOrNull((field) => field.name == parameterName);
+    final field = fields.firstWhereOrNull((field) => field.name == parameterName);
+    return field;
+  }
+
+  /// Returns `null` whenever field is @ignored
+  String? _getElementValue(
+    final Field? field,
+    final DartType type,
+    [final Element? element]
+  ) {
     if (field != null) {
       final databaseValue = "row['${field.columnName}']";
 
       String parameterValue;
 
-      if (parameterElement.type.isDefaultSqlType) {
+      if (type.isDefaultSqlType) {
         parameterValue = databaseValue.cast(
-          parameterElement.type,
-          parameterElement,
+          type,
+          element,
         );
       } else {
         // final typeConverter = [...queryableTypeConverters, field.typeConverter]
@@ -95,37 +124,39 @@ abstract class QueryableProcessor<T extends Queryable> extends Processor<T> {
         //     '_${typeConverter.name.decapitalize()}.decode($castedDatabaseValue)';
 
 
-        final bool nullableAttribute = parameterElement.type != parameterElement.type.promoteNonNullable();
+        final bool nullableAttribute = type != type.promoteNonNullable();
         final Iterable<TypeConverter> typeConverters = [
           ...queryableTypeConverters,
           field.typeConverter,
         ].whereNotNull();
         bool mustadatptonull = false;
-        TypeConverter? typeConverter = typeConverters.getClosestOrNull(parameterElement.type);
+        TypeConverter? typeConverter = typeConverters.getClosestOrNull(type);
         if (typeConverter==null && nullableAttribute){
-          typeConverter = typeConverters.getClosestOrNull(parameterElement.type.promoteNonNullable());
+          typeConverter = typeConverters.getClosestOrNull(type.promoteNonNullable());
           mustadatptonull = true;
         }
         if (typeConverter==null){
           throw InvalidGenerationSourceError(
-            'Column type is not supported for ${parameterElement.type}',
+            'Column type is not supported for $type',
             todo: 'Either use a supported type or supply a type converter.',
           );
         }
 
+        bool adatptdbtypetonull = false;
+        if (mustadatptonull && typeConverter.databaseType==typeConverter.databaseType.promoteNonNullable()){
+          adatptdbtypetonull = true;
+        }
+
         final castedDatabaseValue = databaseValue.cast(
           typeConverter.databaseType,
-          parameterElement,
-        );
+          element,
+        )+(adatptdbtypetonull?'?':'');
 
-        parameterValue = (mustadatptonull?'($castedDatabaseValue==null)?null:':'')+
-             '_${typeConverter.name.decapitalize()}.decode($castedDatabaseValue'+(mustadatptonull?'!':'')+')';
+        parameterValue = (mustadatptonull?'(($castedDatabaseValue)==null)?null:':'')+
+             '_${typeConverter.name.decapitalize()}.decode('+(mustadatptonull?'(':'')+'$castedDatabaseValue'+(mustadatptonull?')!':'')+')';
       
       }
 
-      if (parameterElement.isNamed) {
-        return '$parameterName: $parameterValue';
-      }
       return parameterValue; // also covers positional parameter
     } else {
       return null;
@@ -134,7 +165,7 @@ abstract class QueryableProcessor<T extends Queryable> extends Processor<T> {
 }
 
 extension on String {
-  String cast(DartType dartType, ParameterElement parameterElement) {
+  String cast(DartType dartType, Element? element) {
     if (dartType.isDartCoreBool) {
       if (dartType.isNullable) {
         // if the value is null, return null
@@ -153,7 +184,7 @@ extension on String {
       throw InvalidGenerationSourceError(
         'Trying to convert unsupported type $dartType.',
         todo: 'Consider adding a type converter.',
-        element: parameterElement,
+        element: element,
       );
     }
   }

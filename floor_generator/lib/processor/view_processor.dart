@@ -24,7 +24,7 @@ class ViewProcessor extends QueryableProcessor<View> {
       _getName(),
       fields,
       _getQuery(),
-      getConstructor(fields),
+      getMapper(fields),
     );
   }
 

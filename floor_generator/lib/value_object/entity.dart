@@ -24,10 +24,10 @@ class Entity extends Queryable {
     this.foreignKeys,
     this.indices,
     this.withoutRowid,
-    String constructor,
+    String mapper,
     this.valueMapping,
     this.fts,
-  ) : super(classElement, name, fields, constructor);
+  ) : super(classElement, name, fields, mapper);
 
   String getCreateTableStatement() {
     final databaseDefinition = fields.map((field) {
@@ -79,7 +79,7 @@ class Entity extends Queryable {
           foreignKeys.equals(other.foreignKeys) &&
           indices.equals(other.indices) &&
           withoutRowid == other.withoutRowid &&
-          constructor == other.constructor &&
+          mapper == other.mapper &&
           valueMapping == other.valueMapping;
 
   @override
@@ -90,13 +90,13 @@ class Entity extends Queryable {
       primaryKey.hashCode ^
       foreignKeys.hashCode ^
       indices.hashCode ^
-      constructor.hashCode ^
+      mapper.hashCode ^
       withoutRowid.hashCode ^
       fts.hashCode ^
       valueMapping.hashCode;
 
   @override
   String toString() {
-    return 'Entity{classElement: $classElement, name: $name, fields: $fields, primaryKey: $primaryKey, foreignKeys: $foreignKeys, indices: $indices, constructor: $constructor, withoutRowid: $withoutRowid, valueMapping: $valueMapping, fts: $fts}';
+    return 'Entity{classElement: $classElement, name: $name, fields: $fields, primaryKey: $primaryKey, foreignKeys: $foreignKeys, indices: $indices, mapper: $mapper, withoutRowid: $withoutRowid, valueMapping: $valueMapping, fts: $fts}';
   }
 }
