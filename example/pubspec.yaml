@@ -21,3 +21,6 @@ dev_dependencies:
     path: ../floor_generator/
   flutter_test:
     sdk: flutter
+
+dependency_overrides:
+  analyzer: '1.5.0'
